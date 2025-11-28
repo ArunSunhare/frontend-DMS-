@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
-const VITE_API_URL = 'https://backend-dms-production.up.railway.app/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 // const VITE_API_URL = 'http://localhost:5002/api'; // Local development URL
 
 export interface RegistrationData {
@@ -40,7 +41,7 @@ class ApiService {
 
   constructor() {
     this.api = axios.create({
-      baseURL: VITE_API_URL,
+      baseURL: API_BASE_URL,
       headers: { 'Content-Type': 'application/json' },
       timeout: 30000, // Increased timeout to 30 seconds
     });
