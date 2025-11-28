@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Unified design system with all colors, gradients, fonts, and tokens. All colors MUST be HSL. */
+
+@layer base {
+  :root {
+    /* Base Background & Text */
+    --background: 220 15% 97%;
+    --foreground: 215 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+
+    /* Primary & Secondary */
+    --primary: 220 90% 25%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 45 100% 35%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Utility Colors */
+    --muted: 210 15% 95%;
+    --muted-foreground: 215 10% 50%;
+
+    --accent: 25 85% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 15% 88%;
+    --input: 210 15% 88%;
+    --ring: 210 85% 45%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 215 35% 8%;
+    --foreground: 210 20% 95%;
+
+    --card: 215 30% 12%;
+    --card-foreground: 210 20% 95%;
+
+    --primary: 210 85% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 215 25% 18%;
+    --secondary-foreground: 210 20% 85%;
+  }
+
+  /* Reset everything to allow full width and height */
+  html, body, #root {
+
+    margin: 0;
+    padding: 0;
+  }
+
+
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@media (min-width: 1400px) {
+  .container {
+      max-width: 100vw;
+  }
+  .max-w-screen-2xl {
+    max-width: 100vw;
+  }
+}
