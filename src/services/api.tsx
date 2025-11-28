@@ -1,20 +1,20 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL;
-
-// const VITE_API_URL = 'http://localhost:5002/api'; // Local development URL
+const VITE_API_URL =
+  (import.meta.env.VITE_API_URL as string) || 'http://localhost:5002/api';
+ // Changed port to 5000 for new backend
 
 export interface RegistrationData {
   username: string;
   password: string;
-  role?: 'OPERATOR' | 'CONTROLLER' | 'COMMAND_ADMIN';
+  role?: 'OPERATOR' | 'CONTROLLER' | 'COMMAND_ADMIN'; // Added role field
   operatorCategory: { key: string; name: string };
   command: { key: string; name: string };
   division: { key: string; name: string };
   brigade: { key: string; name: string };
   corps: { key: string; name: string };
   unit: string;
-  assignedCommand?: string;
+  assignedCommand?: string; // For command admins
   droneSpecs: Array<{
     droneName: string;
     droneIds: string[];
@@ -43,23 +43,17 @@ class ApiService {
     this.api = axios.create({
       baseURL: API_BASE_URL,
       headers: { 'Content-Type': 'application/json' },
-      timeout: 30000, // Increased timeout to 30 seconds
+      timeout: 15000, // Added timeout
     });
 
     // Interceptor to add token to every request
-    this.api.interceptors.request.use(
-      (config) => {
-        const token = localStorage.getItem('dms_token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => {
-        console.error('Request interceptor error:', error);
-        return Promise.reject(error);
+    this.api.interceptors.request.use((config) => {
+      const token = localStorage.getItem('dms_token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
-    );
+      return config;
+    });
 
     // Enhanced interceptor for handling 401/403 errors
     this.api.interceptors.response.use(
@@ -69,6 +63,7 @@ class ApiService {
           console.error('Authentication error:', error.response?.data);
           localStorage.removeItem('dms_token');
           localStorage.removeItem('dms_user');
+          // Redirect to login page
           window.location.href = '/';
         }
         return Promise.reject(error);
@@ -91,9 +86,9 @@ class ApiService {
 
   async login(username: string, password: string): Promise<{ success: boolean; token?: string; user?: any; message?: string }> {
     try {
-      console.log('Attempting login for:', username);
+      console.log('Attempting login for:', username); // Debug log
       const response = await this.api.post('/auth/login', { username, password });
-      console.log('Login response:', response.data);
+      console.log('Login response:', response.data); // Debug log
       return response.data;
     } catch (error: any) {
       console.error('Login API error:', error.message, error.response?.data);
@@ -107,15 +102,9 @@ class ApiService {
   async getUserDroneSpecs(userId: string): Promise<any[]> {
     try {
       const response = await this.api.get(`/drones/user/${userId}`);
-      console.log('getUserDroneSpecs response:', response.data);
-      
-      if (response.data && typeof response.data === 'object') {
-        if ('specs' in response.data) {
-          return Array.isArray(response.data.specs) ? response.data.specs : [];
-        }
-        if ('droneSpecs' in response.data) {
-          return Array.isArray(response.data.droneSpecs) ? response.data.droneSpecs : [];
-        }
+      // Handle new RBAC response structure
+      if (response.data && typeof response.data === 'object' && 'specs' in response.data) {
+        return response.data.specs || [];
       }
       return Array.isArray(response.data) ? response.data : [];
     } catch (error: any) {
@@ -127,33 +116,22 @@ class ApiService {
   async getAllFlights(): Promise<any[]> {
     try {
       const response = await this.api.get('/flights');
-      console.log('getAllFlights response:', response.data);
+      console.log("getAllFlights response:", response.data); // Debug log
       
-      if (response.data && typeof response.data === 'object') {
-        if ('allFlights' in response.data) {
-          return Array.isArray(response.data.allFlights) ? response.data.allFlights : [];
-        }
-        if ('flights' in response.data) {
-          return Array.isArray(response.data.flights) ? response.data.flights : [];
-        }
+      // Handle new RBAC response structure
+      if (response.data && typeof response.data === 'object' && 'allFlights' in response.data) {
+        return response.data.allFlights || [];
       }
       return Array.isArray(response.data) ? response.data : [];
     } catch (error: any) {
       console.error('Failed to get all flights:', error.message, error.response?.data);
-      return [];
+      throw error; // Propagate error for debugging
     }
   }
 
   async getFlightWaypoints(flightId: string): Promise<any[]> {
     try {
       const response = await this.api.get(`/flights/${flightId}/waypoints`);
-      console.log('getFlightWaypoints response:', response.data);
-      
-      if (response.data && typeof response.data === 'object') {
-        if ('waypoints' in response.data) {
-          return Array.isArray(response.data.waypoints) ? response.data.waypoints : [];
-        }
-      }
       return Array.isArray(response.data) ? response.data : [];
     } catch (error: any) {
       console.error('Failed to get flight waypoints:', error.message, error.response?.data);
@@ -203,7 +181,7 @@ class ApiService {
   async checkHealth(): Promise<boolean> {
     try {
       const response = await this.api.get('/health');
-      console.log('Health check response:', response.data);
+      console.log('Health check response:', response.data); // Debug log
       return response.status === 200;
     } catch (error: any) {
       console.error('Health check failed:', error.message);
@@ -214,12 +192,11 @@ class ApiService {
   async getAllUsers(): Promise<any[]> {
     try {
       const response = await this.api.get('/users');
-      console.log('getAllUsers response:', response.data);
+      console.log('getAllUsers response:', response.data); // Debug log
       
-      if (response.data && typeof response.data === 'object') {
-        if ('users' in response.data) {
-          return Array.isArray(response.data.users) ? response.data.users : [];
-        }
+      // Handle new RBAC response structure
+      if (response.data && typeof response.data === 'object' && 'users' in response.data) {
+        return response.data.users || [];
       }
       return Array.isArray(response.data) ? response.data : [];
     } catch (error: any) {
@@ -230,65 +207,16 @@ class ApiService {
 
   async getAllDroneSpecs(): Promise<any[]> {
     try {
-      console.log('Fetching all drone specs...');
-      const response = await this.api.get('/drones/all', {
-        timeout: 30000, // Explicit 30s timeout for this call
-      });
-      console.log('getAllDroneSpecs response:', response.data);
+      const response = await this.api.get('/drones/all');
+      console.log('getAllDroneSpecs response:', response.data); // Debug log
       
-      // Handle multiple possible response structures
-      if (response.data && typeof response.data === 'object') {
-        // Check for 'allSpecs' property
-        if ('allSpecs' in response.data) {
-          const specs = response.data.allSpecs;
-          console.log('Found allSpecs:', Array.isArray(specs) ? specs.length : 'not array');
-          return Array.isArray(specs) ? specs : [];
-        }
-        // Check for 'specs' property
-        if ('specs' in response.data) {
-          const specs = response.data.specs;
-          console.log('Found specs:', Array.isArray(specs) ? specs.length : 'not array');
-          return Array.isArray(specs) ? specs : [];
-        }
-        // Check for 'droneSpecs' property
-        if ('droneSpecs' in response.data) {
-          const specs = response.data.droneSpecs;
-          console.log('Found droneSpecs:', Array.isArray(specs) ? specs.length : 'not array');
-          return Array.isArray(specs) ? specs : [];
-        }
-        // Check for 'data' property
-        if ('data' in response.data) {
-          const specs = response.data.data;
-          console.log('Found data:', Array.isArray(specs) ? specs.length : 'not array');
-          return Array.isArray(specs) ? specs : [];
-        }
+      // Handle new RBAC response structure
+      if (response.data && typeof response.data === 'object' && 'allSpecs' in response.data) {
+        return response.data.allSpecs || [];
       }
-      
-      // If response.data is already an array
-      if (Array.isArray(response.data)) {
-        console.log('Response data is array:', response.data.length);
-        return response.data;
-      }
-      
-      console.warn('No drone specs found in response, returning empty array');
-      return [];
+      return Array.isArray(response.data) ? response.data : [];
     } catch (error: any) {
-      // Enhanced error logging
-      if (error.code === 'ECONNABORTED') {
-        console.error('getAllDroneSpecs timeout error - Request took longer than 30 seconds');
-      } else if (error.response) {
-        console.error('getAllDroneSpecs server error:', {
-          status: error.response.status,
-          statusText: error.response.statusText,
-          data: error.response.data
-        });
-      } else if (error.request) {
-        console.error('getAllDroneSpecs network error - No response received:', error.message);
-      } else {
-        console.error('getAllDroneSpecs error:', error.message);
-      }
-      
-      // Return empty array instead of throwing to prevent app crash
+      console.error('Failed to get all drone specs:', error.message, error.response?.data);
       return [];
     }
   }
@@ -303,6 +231,7 @@ class ApiService {
     }
   }
 
+  // New helper methods for RBAC
   async getUserProfile(): Promise<any | null> {
     try {
       const response = await this.api.get('/users/profile');
@@ -344,6 +273,7 @@ class ApiService {
     }
   }
 
+  // Flight management methods
   async approveFlight(flightId: string): Promise<{ success: boolean; message?: string }> {
     try {
       const response = await this.api.post(`/flights/${flightId}/approve`);
@@ -374,18 +304,22 @@ class ApiService {
   canUserAccessCommand(user: any | null, commandCode: string): boolean {
     if (!user) return false;
     
+    // Super admin with all access can access any command
     if (user.role === 'SUPER_ADMIN' && user.can_access_all_commands) {
       return true;
     }
     
+    // Command admin can access their assigned command
     if (user.role === 'COMMAND_ADMIN' && user.assigned_command === commandCode) {
       return true;
     }
     
+    // Users can access their own command
     if (user.command === commandCode) {
       return true;
     }
     
+    // Check accessible commands array
     return user.accessibleCommands?.includes(commandCode) || false;
   }
 
