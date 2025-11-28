@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
 const VITE_API_URL =
-  (import.meta.env.VITE_API_URL as string) || 'http://localhost:5002/api';
+  (import.meta.env.VITE_API_URL as string) || 'https://backend-dms-production.up.railway.app/api';
  // Changed port to 5000 for new backend
 
 export interface RegistrationData {
